@@ -4,13 +4,13 @@ from .models import Course, Submission, Choice
 def course_details(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
     return render(request, 'course_details_bootstrap.html', {'course': course})
-
 def submit(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
     if request.method == "POST":
         submission = Submission.objects.create(user=request.user, course=course)
-        selected_choices = request.POST.getlist('choices')
-        submission.choices.set(selected_choices)
+        selected_choice_ids = request.POST.getlist('choices')
+        submission.choices.set(Choice.objects.filter(id__in=selected_choice_ids))
+        submission.questions.set(course.questions.all())  # add questions
         submission.save()
         return redirect('show_exam_result', submission_id=submission.id)
     return redirect('course_details', course_id=course.id)
