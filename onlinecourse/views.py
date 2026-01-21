@@ -1,27 +1,62 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Course, Submission, Choice
+from .models import Course, Lesson, Question, Choice, Enrollment, Submission, Learner
+from django.contrib.auth.decorators import login_required
 
-def course_details(request, course_id):
+# Homepage showing all courses
+def index(request):
+    courses = Course.objects.all()
+    context = {'courses': courses}
+    return render(request, 'onlinecourse/index.html', context)
+
+# Course details page
+def course_detail(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
-    return render(request, 'course_details_bootstrap.html', {'course': course})
+    lessons = course.lessons.all()
+    questions = course.questions.all()
+    context = {
+        'course': course,
+        'lessons': lessons,
+        'questions': questions
+    }
+    return render(request, 'onlinecourse/course_detail.html', context)
+
+# Enroll a learner into a course
+@login_required
+def enroll(request, course_id):
+    course = get_object_or_404(Course, pk=course_id)
+    learner = get_object_or_404(Learner, user=request.user)
+    enrollment, created = Enrollment.objects.get_or_create(learner=learner, course=course)
+    return redirect('course_detail', course_id=course.id)
+
+# Submit answers to a quiz
+@login_required
 def submit(request, course_id):
     course = get_object_or_404(Course, pk=course_id)
-    if request.method == "POST":
-        submission = Submission.objects.create(user=request.user, course=course)
-        selected_choice_ids = request.POST.getlist('choices')
-        submission.choices.set(Choice.objects.filter(id__in=selected_choice_ids))
-        submission.questions.set(course.questions.all())  # add questions
-        submission.save()
-        return redirect('show_exam_result', submission_id=submission.id)
-    return redirect('course_details', course_id=course.id)
+    learner = get_object_or_404(Learner, user=request.user)
+    enrollment = get_object_or_404(Enrollment, learner=learner, course=course)
 
-def show_exam_result(request, submission_id):
+    if request.method == 'POST':
+        selected_choices = request.POST.getlist('choices')
+        submission = Submission.objects.create(enrollment=enrollment)
+        submission.choices.set(selected_choices)
+        submission.save()
+        return redirect('show_result', course_id=course.id, submission_id=submission.id)
+
+    return redirect('course_detail', course_id=course.id)
+
+# Show quiz results
+@login_required
+def show_result(request, course_id, submission_id):
+    course = get_object_or_404(Course, pk=course_id)
     submission = get_object_or_404(Submission, pk=submission_id)
-    total = sum(q.grade for q in submission.course.questions.all())
-    score = 0
-    for question in submission.course.questions.all():
-        correct_choices = question.choices.filter(is_correct=True)
-        selected = submission.choices.filter(question=question)
-        if set(correct_choices) == set(selected):
-            score += question.grade
-    return render(request, 'exam_result.html', {'submission': submission, 'score': score, 'total': total})
+    questions = course.questions.all()
+    
+    total_score = sum([q.is_get_score([c.id for c in submission.choices.filter(question=q)]) for q in questions])
+    
+    context = {
+        'course': course,
+        'submission': submission,
+        'total_score': total_score,
+        'questions': questions
+    }
+    return render(request, 'onlinecourse/result.html', context)
