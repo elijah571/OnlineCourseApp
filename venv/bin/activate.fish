@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/elijah/OnlineCourseApp/venv
+set -gx VIRTUAL_ENV /home/elijah/tfjzl-final-cloud-app-with-database/venv
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH
