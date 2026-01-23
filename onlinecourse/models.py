@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Course model
 class Course(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField()
@@ -9,7 +8,7 @@ class Course(models.Model):
     def __str__(self):
         return self.name
 
-# Instructor model
+
 class Instructor(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_time = models.BooleanField(default=True)
@@ -18,21 +17,21 @@ class Instructor(models.Model):
     def __str__(self):
         return self.user.username
 
-# Learner model
+
 class Learner(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     occupation_choices = [
         ('student', 'Student'),
         ('developer', 'Developer'),
         ('data_scientist', 'Data Scientist'),
-        ('other', 'Other')
+        ('other', 'Other'),
     ]
     occupation = models.CharField(max_length=20, choices=occupation_choices, default='other')
 
     def __str__(self):
         return self.user.username
 
-# Lesson model
+
 class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
     title = models.CharField(max_length=200)
@@ -41,7 +40,7 @@ class Lesson(models.Model):
     def __str__(self):
         return self.title
 
-# Question model
+
 class Question(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='questions')
     text = models.TextField()
@@ -51,11 +50,12 @@ class Question(models.Model):
         return self.text
 
     def is_get_score(self, selected_ids):
-        all_correct_ids = set(self.choices.filter(is_correct=True).values_list('id', flat=True))
-        selected_ids_set = set(selected_ids)
-        return self.grade if all_correct_ids == selected_ids_set else 0
+        correct_ids = set(
+            self.choices.filter(is_correct=True).values_list('id', flat=True)
+        )
+        return self.grade if correct_ids == set(selected_ids) else 0
 
-# Choice model
+
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
     text = models.CharField(max_length=200)
@@ -64,7 +64,7 @@ class Choice(models.Model):
     def __str__(self):
         return self.text
 
-# Enrollment model
+
 class Enrollment(models.Model):
     learner = models.ForeignKey(Learner, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
@@ -74,11 +74,11 @@ class Enrollment(models.Model):
     def __str__(self):
         return f"{self.learner.user.username} enrolled in {self.course.name}"
 
-# Submission model
+
 class Submission(models.Model):
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
     choices = models.ManyToManyField(Choice)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Submission by {self.enrollment.learner.user.username} for {self.enrollment.course.name}"
+        return f"Submission for {self.enrollment.course.name}"

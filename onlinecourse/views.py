@@ -46,7 +46,26 @@ def submit(request, course_id):
 
 # Show quiz results
 @login_required
-def show_result(request, course_id, submission_id):
+
+@login_required
+def show_exam_result(request, course_id, submission_id):
+    course = get_object_or_404(Course, pk=course_id)
+    submission = get_object_or_404(Submission, pk=submission_id)
+    questions = course.questions.all()
+
+    total_score = 0
+    for question in questions:
+        selected = submission.choices.filter(question=question)
+        total_score += question.is_get_score([c.id for c in selected])
+
+    context = {
+        'course': course,
+        'submission': submission,
+        'score': total_score,
+        'questions': questions
+    }
+    return render(request, 'onlinecourse/exam_result.html', context)
+
     course = get_object_or_404(Course, pk=course_id)
     submission = get_object_or_404(Submission, pk=submission_id)
     questions = course.questions.all()
