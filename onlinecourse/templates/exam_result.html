@@ -8,21 +8,21 @@
     />
   </head>
   <body class="p-4">
-    <h1>Congratulations!</h1>
-    <p>Your score: <strong>{{ score }}</strong></p>
+    <h1>Congratulations {{ request.user.username }}!</h1>
+    <p>You scored: {{ score }} / {{ possible_score }}</p>
+
+    <hr />
 
     {% for question in questions %}
-    <div class="mb-3">
-      <strong>{{ question.text }}</strong>
-      <ul>
-        {% for choice in question.choices.all %}
-        <li>
-          {{ choice.text }} {% if choice in submission.choices.all %} ✔ {% endif
-          %}
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
+    <p><strong>{{ question.text }}</strong></p>
+    <ul>
+      {% for choice in question.choices.all %}
+      <li>
+        {{ choice.text }} {% if choice in submission.choices.all %} ✔ {% endif
+        %} {% if choice.is_correct %} (Correct) {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
     {% endfor %}
   </body>
 </html>

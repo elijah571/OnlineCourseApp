@@ -1,7 +1,13 @@
 from django.contrib import admin
 from .models import (
-    Course, Lesson, Question, Choice,
-    Submission, Enrollment, Instructor, Learner
+    Course,
+    Lesson,
+    Question,
+    Choice,
+    Submission,
+    Enrollment,
+    Instructor,
+    Learner
 )
 
 class ChoiceInline(admin.TabularInline):
@@ -16,16 +22,18 @@ class QuestionInline(admin.TabularInline):
 
 class CourseAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')
-    inlines = [QuestionInline]   # ✅ Question belongs to Course
+    search_fields = ('name',)
+    list_filter = ('name',)
+    inlines = [QuestionInline]
+
+
+class LessonAdmin(admin.ModelAdmin):
+    list_display = ('title', 'course')
 
 
 class QuestionAdmin(admin.ModelAdmin):
     list_display = ('text', 'course', 'grade')
     inlines = [ChoiceInline]
-
-
-class LessonAdmin(admin.ModelAdmin):
-    list_display = ('title', 'course')  # ✅ NO inline here
 
 
 admin.site.register(Course, CourseAdmin)
